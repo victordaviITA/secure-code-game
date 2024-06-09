@@ -131,18 +131,27 @@ class DB_CRUD_ops(object):
             db_path = os.path.join(path, 'level-4.db')
             db_con = con.create_connection(db_path)
             cur = db_con.cursor()
-
+                
             res = "[METHOD EXECUTED] get_stock_price\n"
-            query = "SELECT price FROM stocks WHERE symbol = '" + stock_symbol + "'"
-            res += "[QUERY] " + query + "\n"
-            if ';' in query:
-                res += "[SCRIPT EXECUTION]\n"
-                cur.executescript(query)
-            else:
-                cur.execute(query)
-                query_outcome = cur.fetchall()
-                for result in query_outcome:
-                    res += "[RESULT] " + str(result) + "\n"
+            query = "SELECT price FROM stocks WHERE symbol = ?"
+             # a block list (aka restricted characters) that should not exist in user-supplied input
+            # checks if input contains characters from the block list
+            # Split the string at the first occurrence of ';'
+            parts = stock_symbol.split(';', 1)
+
+            # The first part of the split is what you're interested in
+            first_part = parts[0] if parts else None
+            full_query = query.replace("?", f"'{first_part}'")
+
+       
+            cur.execute(query,(stock_symbol,))
+            
+            
+            res += "[QUERY] " + full_query + "\n"
+
+            query_outcome = cur.fetchall()
+            for result in query_outcome:
+                res += "[RESULT] " + str(result) + "\n"
             return res
 
         except sqlite3.Error as e:
